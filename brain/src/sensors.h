@@ -4,9 +4,12 @@
 
 typedef struct _Gyro
 {
-    float x;
-    float y;
-    float z;
+    float ax;
+    float ay;
+    float az;
+    float rx;
+    float ry;
+    float rz;
 } Gyro;
 
 typedef struct _Hand
@@ -18,5 +21,6 @@ typedef struct _Hand
     float thumb;
 } Hand;
 
-void gyro_parse_packet(Gyro*, Packet*);
+void gyro_parse_packet(Gyro*, Packet*, int);
 void hand_parse_packet(Hand*, Packet*);
+float pot_parse_packet(Packet*);
