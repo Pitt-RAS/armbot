@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 
+option(TESTING OFF)
+
 project(brain C)
 
 find_library(WIRINGPI_LIB wiringPI REQUIRED)
@@ -10,6 +12,10 @@ if (CMAKE_BUILD_TYPE EQUAL Debug)
     set(cflags ${cflags} -Og -g)
 elseif (CMAKE_BUILD_TYPE EQUAL Release)
     set(cflags ${cflags} -O2)
+endif()
+
+if (TESTING)
+    add_compile_definitions(TESTING)
 endif()
 
 # add files to project
