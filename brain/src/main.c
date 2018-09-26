@@ -13,8 +13,8 @@
 bool running;
 
 // sensors
-Gyro shoulder;
-Gyro wrist;
+//Gyro shoulder;
+//Gyro wrist;
 Hand hand;
 float elbow; /* potentiometer */
 
@@ -27,6 +27,10 @@ void setup()
     /* initialize library and pin modes */
     //wiringPiSetupGpio();
     #endif
+
+    // initialize serial
+    // open a serial port and store the file address in the packet
+    open_serial_port(&packet);
 }
 
 void loop()
@@ -35,16 +39,18 @@ void loop()
     packet_get_next(&packet);
 
     // parse data values from packet
-    gyro_parse_packet(&wrist, &packet, 0);
-    gyro_parse_packet(&shoulder, &packet, 1);
+    //gyro_parse_packet(&wrist, &packet, 0);
+    //gyro_parse_packet(&shoulder, &packet, 1);
     hand_parse_packet(&hand, &packet);
-    elbow = pot_parse_packet(&packet);
+    //elbow = pot_parse_packet(&packet);
 
     // calculate rotations with the following procedure
     // add elbow angle to wrist angle
     // subtract shoulder angles from wrist angles
 
     // move motors
+
+
 
 }
 

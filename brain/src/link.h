@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#define SERIAL_PORT "/dev/ttyACM0"
+
 typedef struct _Packet
 {
     // all values 0-255
@@ -12,6 +14,8 @@ typedef struct _Packet
     uint8_t pot;
     // 5 fingers
     uint8_t hand[5];
+    int fd;
 } Packet;
 
+int open_serial_port();
 int packet_get_next(Packet*);
