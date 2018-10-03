@@ -8,7 +8,7 @@
 /* ALL OF THE FOLLOWING CODE IS PURELY SETUP */
 /* configure the usb port on the pi for serial communications */
 /* credit to: https://stackoverflow.com/users/198536/wallyk */
-int set_interface_attribs(int fd, int speed, int parity)
+/*int set_interface_attribs(int fd, int speed, int parity)
 {
     struct termios tty;
     memset(&tty, 0, sizeof(tty));
@@ -43,9 +43,9 @@ int set_interface_attribs(int fd, int speed, int parity)
         return -1;
     }
     return 0;
-}
+}*/
 
-void set_blocking(int fd, int should_block)
+/*void set_blocking(int fd, int should_block)
 {
     struct termios tty;
     memset(&tty, 0, sizeof(tty));
@@ -86,6 +86,18 @@ int open_serial_port(Packet* p)
 
     // return just because
     return fd;
+}*/
+
+int open_serial_port(Packet* p)
+{
+    // uncomment when ready to build
+    /*p->fd = serialOpen("/dev/ttyAMA0", 9600);
+    if (p->fd < 0)
+    {
+        // TODO error
+    }*/
+
+    // write the rest on https://github.com/WiringPi/WiringPi/blob/master/examples/serialTest.c
 }
 
 int packet_get_next(Packet* p)
