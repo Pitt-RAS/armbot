@@ -1,8 +1,10 @@
 #define BUF_SIZE 6
 
+#define VCC 5
+
 // bend sensors
-#define BEND_STRAIGHT 11500
-#define BEND_FLEX 29000
+#define BEND_STRAIGHT 880
+#define BEND_FLEX 580
 #define R_DIV 56000
 
 // fingers
@@ -23,6 +25,7 @@
 int buffer[BUF_SIZE];
 
 void setup() {
+    Serial.begin(9600);
     pinMode(INDEX_PIN, INPUT);
     pinMode(MIDDLE_PIN, INPUT);
     pinMode(RING_PIN, INPUT);
@@ -41,9 +44,13 @@ int readFlexSensor(int pin)
 }
 
 void loop() {
-    for (int i=INDEX_PIN; i<WRIST_PIN+1; i++)
+    /*for (int i=INDEX_PIN; i<WRIST_PIN+1; i++)
     {
         buffer[i] = readFlexSensor(i);
     }
-    Serial.write(buffer, BUF_SIZE);
+    Serial.write(buffer, BUF_SIZE);*/
+    Serial.print(readFlexSensor(INDEX_PIN));
+    Serial.print(" - ");
+    Serial.println(analogRead(INDEX_PIN));
+    delay(10);
 }
