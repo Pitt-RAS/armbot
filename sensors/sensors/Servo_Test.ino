@@ -71,11 +71,14 @@ void loop() {
     int newVal=readFlexSensor(pins[i]);
     if(abs(current-newVal)>TOLERANCE){
       fingers[i].write(newVal);
+      
     }
+    Serial.print(i+"-");
+     Serial.print(newVal);
+    Serial.print(" - ");
+    Serial.println(analogRead(pins[i]));
   }
    
-    Serial.print(readFlexSensor(INDEX_PIN));
-    Serial.print(" - ");
-    Serial.println(analogRead(INDEX_PIN));
+ 
     delay(10);
 }
