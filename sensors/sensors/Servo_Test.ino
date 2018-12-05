@@ -13,8 +13,8 @@
 #define INDEX_PIN 0
 #define MIDDLE_PIN 1
 #define RING_PIN 2
-#define PINKIE_PIN 4
-#define THUMB_PIN 7
+#define PINKIE_PIN 0
+#define THUMB_PIN 1
 #define WRIST_PIN 8
 #define POT_PIN 12
 
@@ -41,6 +41,7 @@ int buffer[BUF_SIZE];
  Servo thumb_b;
  Servo fingers[]={pinky,ring,middle,index,thumb,thumb_b};
  int pins[]={PINKY_FINGER,RING_FINGER,MIDDLE_FINGER,INDEX_FINGER,THUMB_FINGER,THUMB_B_FINGER};
+ int inputs[]={PINKIE_PIN,RING_PIN,MIDDLE_PIN,INDEX_PIN,THUMB_PIN,WRIST_PIN};
 
 void setup() {
     Serial.begin(9600);
@@ -64,11 +65,15 @@ int readFlexSensor(int pin)
     float flexR = R_DIV * (VCC / flexV - 1.0);
     return map(flexR, BEND_STRAIGHT, BEND_FLEX, 0, 180);
 }
+int readPot(int pin){
+  int value = analogRead(pin);
+  return map(value, 0, 1024, 0, 180);
+}
 
 void loop() {
   for (int i=0;i<6;i++){
     int current=fingers[i].read();
-    int newVal=readFlexSensor(pins[i]);
+    int newVal=readPot(inputs[i]);
     if(abs(current-newVal)>TOLERANCE){
       fingers[i].write(newVal);
       
@@ -77,6 +82,7 @@ void loop() {
      Serial.print(newVal);
     Serial.print(" - ");
     Serial.println(analogRead(pins[i]));
+    
   }
    
  
