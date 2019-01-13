@@ -1,11 +1,16 @@
 #include <Servo.h>
 #define BUF_SIZE 6
 
+typedef struct _FINGER
+{
+  Servo servo;
+  int sensor_pin;
+  int low;
+  int high;
+} FINGER;
+
 #define VCC 5
 #define TOLERANCE 10
-
-#define CALIBRATE_BUTTON 7
-#define CALIBRATE_LED 8
 
 // bend sensors
 #define BEND_STRAIGHT 880
@@ -35,17 +40,15 @@
 #define POT_FULL 0
 #define POT_MAP 0
 
+int calibrate_mode = 0;
+#define CALIBRATE_BUTTON 2
+#define CALIBRATE_LED 7
+
 int buffer[BUF_SIZE];
- Servo pinky;
- Servo ring;
- Servo middle;
- Servo index;
- Servo thumb;
- Servo thumb_b;
- Servo fingers[]={pinky,ring,middle,index,thumb,thumb_b};
- int pins[]={PINKY_FINGER,RING_FINGER,MIDDLE_FINGER,INDEX_FINGER,THUMB_FINGER,THUMB_B_FINGER};
- int inputs[]={PINKIE_PIN,RING_PIN,MIDDLE_PIN,INDEX_PIN,THUMB_PIN,WRIST_PIN};
-boolean calibrate = false;
+Servo fingers[6];
+FINGER tmp_fingers[6];
+int pins[]={PINKY_FINGER,RING_FINGER,MIDDLE_FINGER,INDEX_FINGER,THUMB_FINGER,THUMB_B_FINGER};
+int inputs[]={PINKIE_PIN,RING_PIN,MIDDLE_PIN,INDEX_PIN,THUMB_PIN,WRIST_PIN};
 
 void setup() {
     Serial.begin(9600);
@@ -56,7 +59,7 @@ void setup() {
     pinMode(THUMB_PIN, INPUT);
     pinMode(WRIST_PIN, INPUT);
     pinMode(POT_PIN, INPUT);
-    pinMode(CALIBRATE_BUTTON, INPUT);
+    pinMode(CALIBRATE_BUTTON, INPUT_PULLUP);
     pinMode(CALIBRATE_LED, OUTPUT);
     for (int i=0;i<6;i++){
       fingers[i].attach(pins[i]);
@@ -79,26 +82,40 @@ int readPot(int pin){
 
 void loop() {
   int val = digitalRead(CALIBRATE_BUTTON);
-  digitalWrite(CALIBRATE_LED, val);
 
-  if (calibrate)
+  if (val == LOW)
   {
+    calibrate_mode = !calibrate_mode;
     digitalWrite(CALIBRATE_LED, HIGH);
+    delay(1000);
+    digitalWrite(CALIBRATE_LED, calibrate_mode);
   }
-  
-  for (int i=0;i<6;i++){
-    int current=fingers[i].read();
-    int newVal=readFlexSensor(inputs[i]);
-    if(abs(current-newVal)>TOLERANCE){
-      fingers[i].write(newVal);
-    }
-    //Serial.print(i+"-");
-    //Serial.print(newVal);
-    //Serial.print(" - ");
-    //Serial.println(analogRead(pins[i]));
+
+  if (calibrate_mode)
+  {
+    digitalWrite(CALIBRATE_LED, LOW);
+    delay(50);
+    digitalWrite(CALIBRATE_LED, HIGH);
+    delay(50);
+
     
   }
-   
- 
-    delay(100);
+  else
+  {
+    for (int i=0;i<6;i++){
+      int current=fingers[i].read();
+      int newVal=readFlexSensor(inputs[i]);
+      if(abs(current-newVal)>TOLERANCE){
+        fingers[i].write(newVal);
+      }
+      //Serial.print(i+"-");
+      //Serial.print(newVal);
+      //Serial.print(" - ");
+      //Serial.println(analogRead(pins[i]));
+
+      delay(10);    
+    }  
+  } 
+  
+  //delay(100);
 }
