@@ -1,5 +1,9 @@
 #include <Servo.h>
-#define BUF_SIZE 6
+#define BUF_SIZE NUM_FINGERS
+
+#define NUM_FINGERS 1
+#define NOISE_TOLERANCE 20
+static int PWM_PINS[6] = {3,5,6,9,10,11};
 
 typedef struct _FINGER
 {
@@ -7,32 +11,16 @@ typedef struct _FINGER
   int sensor_pin;
   int low;
   int high;
+  int last;
 } FINGER;
 
-#define VCC 5
-#define TOLERANCE 10
-
-// bend sensors
-#define BEND_STRAIGHT 880
-#define BEND_FLEX 580
-#define R_DIV 10000
-
 // fingers
-#define INDEX_PIN 0
-#define MIDDLE_PIN 1
-#define RING_PIN 2
-#define PINKIE_PIN 0
-#define THUMB_PIN 1
-#define WRIST_PIN 8
-#define POT_PIN 12
-
-//Servos
-#define INDEX_FINGER 3
-#define MIDDLE_FINGER 5
-#define RING_FINGER 6
-#define PINKY_FINGER 9
-#define THUMB_FINGER 10
-#define THUMB_B_FINGER 11
+#define INDEX 0
+#define MIDDLE 1
+#define RING 2
+#define PINKIE 3
+#define THUMB 4
+#define THUMB_SECONDARY 5
 
 // potentiomenter
 // todo fill values
@@ -41,48 +29,79 @@ typedef struct _FINGER
 #define POT_MAP 0
 
 int calibrate_mode = 0;
-#define CALIBRATE_BUTTON 2
-#define CALIBRATE_LED 7
+#define CALIBRATE_BUTTON 12
+#define CALIBRATE_LED 13
 
-int buffer[BUF_SIZE];
-Servo fingers[6];
-FINGER tmp_fingers[6];
-int pins[]={PINKY_FINGER,RING_FINGER,MIDDLE_FINGER,INDEX_FINGER,THUMB_FINGER,THUMB_B_FINGER};
-int inputs[]={PINKIE_PIN,RING_PIN,MIDDLE_PIN,INDEX_PIN,THUMB_PIN,WRIST_PIN};
+FINGER tmp_fingers[NUM_FINGERS];
 
-void setup() {
-    Serial.begin(9600);
-    pinMode(INDEX_PIN, INPUT);
-    pinMode(MIDDLE_PIN, INPUT);
-    pinMode(RING_PIN, INPUT);
-    pinMode(PINKIE_PIN, INPUT);
-    pinMode(THUMB_PIN, INPUT);
-    pinMode(WRIST_PIN, INPUT);
-    pinMode(POT_PIN, INPUT);
-    pinMode(CALIBRATE_BUTTON, INPUT_PULLUP);
-    pinMode(CALIBRATE_LED, OUTPUT);
-    for (int i=0;i<6;i++){
-      fingers[i].attach(pins[i]);
-    }
-    
-}
-
-int readFlexSensor(int pin)
-{
-    int value = analogRead(pin);
-    Serial.println(value);
-    float flexV = value * VCC / 1023.0;
-    float flexR = R_DIV * (VCC / flexV - 1.0);
-    return map(flexR, BEND_STRAIGHT, BEND_FLEX, 0, 180);
-}
 int readPot(int pin){
   int value = analogRead(pin);
   return map(value, 0, 1024, 0, 180);
 }
 
+void finger_setup(FINGER* f, int sensor, int servo)
+{
+  f->sensor_pin = sensor;
+  pinMode(sensor, INPUT);
+  f->servo.attach(servo);
+  f->low = analogRead(sensor);
+  f->high = analogRead(sensor);
+
+  Serial.print("PWM: ");
+  Serial.println(f->servo.attached());
+}
+
+void finger_calibrate(FINGER* f)
+{
+  int val = analogRead(f->sensor_pin);
+  Serial.print("val :");
+  Serial.println(val);
+  if (val < f->low)
+  {
+    f->low = val;
+  }
+  if (val > f->high)
+  {
+    f->high = val;
+  }
+}
+
+int finger_read(FINGER* f)
+{
+  int val = analogRead(f->sensor_pin);
+  int mapped = map(val, f->low, f->high, 0, 180);
+
+  if (abs(mapped - f->last) > NOISE_TOLERANCE)
+  {
+    return mapped;
+  }
+  return f->last;
+}
+
+void finger_write(FINGER* f, int val)
+{
+  f->servo.write(val);
+}
+
+void finger_move(FINGER* f)
+{
+  int val = finger_read(f);
+  finger_write(f, val);
+}
+
+void setup() {
+    Serial.begin(9600);
+    pinMode(CALIBRATE_BUTTON, INPUT_PULLUP);
+    pinMode(CALIBRATE_LED, OUTPUT);
+    
+    for (int i=0;i<NUM_FINGERS;i++){
+      finger_setup(&tmp_fingers[i], i, PWM_PINS[i]);
+    }
+    
+}
+
 void loop() {
   int val = digitalRead(CALIBRATE_BUTTON);
-
   if (val == LOW)
   {
     calibrate_mode = !calibrate_mode;
@@ -90,7 +109,6 @@ void loop() {
     delay(1000);
     digitalWrite(CALIBRATE_LED, calibrate_mode);
   }
-
   if (calibrate_mode)
   {
     digitalWrite(CALIBRATE_LED, LOW);
@@ -98,24 +116,16 @@ void loop() {
     digitalWrite(CALIBRATE_LED, HIGH);
     delay(50);
 
-    
+    for (int i=0; i<NUM_FINGERS; i++)
+    {
+      finger_calibrate(&tmp_fingers[i]);    
+    }
   }
   else
   {
-    for (int i=0;i<6;i++){
-      int current=fingers[i].read();
-      int newVal=readFlexSensor(inputs[i]);
-      if(abs(current-newVal)>TOLERANCE){
-        fingers[i].write(newVal);
-      }
-      //Serial.print(i+"-");
-      //Serial.print(newVal);
-      //Serial.print(" - ");
-      //Serial.println(analogRead(pins[i]));
-
-      delay(10);    
+    for (int i=0;i<NUM_FINGERS;i++){
+      finger_move(&tmp_fingers[i]);
+      delay(1);    
     }  
-  } 
-  
-  //delay(100);
+  }
 }
