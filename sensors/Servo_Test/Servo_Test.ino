@@ -1,7 +1,7 @@
 #include <Servo.h>
 #define BUF_SIZE NUM_FINGERS
 
-#define NUM_FINGERS 1
+#define NUM_FINGERS 2
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11};
 
