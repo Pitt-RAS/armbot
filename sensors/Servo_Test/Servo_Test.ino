@@ -1,7 +1,7 @@
 #include <Servo.h>
 #define BUF_SIZE NUM_FINGERS
 
-#define NUM_FINGERS 2
+#define NUM_FINGERS 3
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 
@@ -51,7 +51,7 @@ void finger_setup(FINGER* f, int sensor, int servo)
   f->high = analogRead(sensor);
 
   Serial.print("PWM: ");
-  Serial.println(f->servo.attached());
+  Serial.println(servo);
 }
 
 // set min and max values of the bend sensors 
