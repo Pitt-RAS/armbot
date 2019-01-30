@@ -13,6 +13,7 @@ typedef struct _FINGER
   int low;
   int high;
   int last;
+  bool invert;
 } FINGER;
 
 // easy names for array indices of the fingers
@@ -44,9 +45,14 @@ int readPot(int pin){
 // fill all the values in the finger wrapper
 void finger_setup(FINGER* f, int sensor, int servo)
 {
+  f->invert = 1;
   f->sensor_pin = sensor;
   pinMode(sensor, INPUT);
   f->servo.attach(servo);
+  if (f->invert)
+  {
+      f->servo.write(180);
+  }
   f->low = analogRead(sensor);
   f->high = analogRead(sensor);
 
@@ -54,7 +60,7 @@ void finger_setup(FINGER* f, int sensor, int servo)
   Serial.println(servo);
 }
 
-// set min and max values of the bend sensors 
+// set min and max values of the bend sensors
 void finger_calibrate(FINGER* f)
 {
   int val = analogRead(f->sensor_pin);
@@ -86,7 +92,14 @@ int finger_read(FINGER* f)
 // write mapped values to the corresponding servo
 void finger_write(FINGER* f, int val)
 {
-  f->servo.write(val);
+  if (f->invert)
+  {
+      f->servo.write(180-val);
+  }
+  else
+  {
+      f->servo.write(val);
+  }
 }
 
 // automatically read sensor and write to the servo
@@ -101,11 +114,11 @@ void setup() {
     Serial.begin(9600);
     pinMode(CALIBRATE_BUTTON, INPUT_PULLUP);
     pinMode(CALIBRATE_LED, OUTPUT);
-    
+
     for (int i=0;i<NUM_FINGERS;i++){
       finger_setup(&tmp_fingers[i], i, PWM_PINS[i]);
     }
-    
+
 }
 
 // Arduino loop function
@@ -127,14 +140,14 @@ void loop() {
 
     for (int i=0; i<NUM_FINGERS; i++)
     {
-      finger_calibrate(&tmp_fingers[i]);    
+      finger_calibrate(&tmp_fingers[i]);
     }
   }
   else
   {
     for (int i=0;i<NUM_FINGERS;i++){
       finger_move(&tmp_fingers[i]);
-      delay(1);    
-    }  
+      delay(1);
+    }
   }
 }
