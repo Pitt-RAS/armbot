@@ -1,21 +1,11 @@
 #include <Servo.h>
-#define BUF_SIZE NUM_FINGERS
+#include <QueueArray.h>
 
+#define BUF_SIZE NUM_FINGERS
+#define AVG_THRESHOLD 10
 #define NUM_FINGERS 3
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
-
-// wrapper for all the pins necessary to control the fingers
-typedef struct _FINGER
-{
-  Servo servo;
-  int sensor_pin;
-  int low;
-  int high;
-  int last;
-  bool invert;
-} FINGER;
-
 // easy names for array indices of the fingers
 #define INDEX 0
 #define MIDDLE 1
@@ -23,19 +13,29 @@ typedef struct _FINGER
 #define PINKIE 3
 #define THUMB 4
 #define THUMB_SECONDARY 5
-
-// potentiomenter
-// todo fill values
 #define POT_NONE 0
 #define POT_FULL 0
 #define POT_MAP 0
-
 // flag that indicates if we are calibrating the bend sensors
-int calibrate_mode = 0;
 #define CALIBRATE_BUTTON 12 // button to activate calibrate mode
 #define CALIBRATE_LED 13 // calibrate mode led indicator
 
-FINGER tmp_fingers[NUM_FINGERS]; // array of finger wrappers
+int calibrate_mode = 0;
+
+// wrapper for all the pins necessary to control the fingers
+typedef struct _Finger
+{
+  Servo servo;
+  int sensor_pin;
+  int low;
+  int high;
+  int last;
+  bool invert;
+  int history[AVG_THRESHOLD];
+  // init array to be FULL from the start
+} Finger;
+
+Finger fingers[NUM_FINGERS]; // array of finger wrappers
 
 int readPot(int pin){
   int value = analogRead(pin);
@@ -43,9 +43,9 @@ int readPot(int pin){
 }
 
 // fill all the values in the finger wrapper
-void finger_setup(FINGER* f, int sensor, int servo)
+void finger_setup(Finger* f, int sensor, int servo, int invert)
 {
-  f->invert = 1;
+  f->invert = invert;
   f->sensor_pin = sensor;
   pinMode(sensor, INPUT);
   f->servo.attach(servo);
@@ -61,7 +61,7 @@ void finger_setup(FINGER* f, int sensor, int servo)
 }
 
 // set min and max values of the bend sensors
-void finger_calibrate(FINGER* f)
+void finger_calibrate(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
   Serial.print("val :");
@@ -77,7 +77,7 @@ void finger_calibrate(FINGER* f)
 }
 
 // read and map bend sensor values
-int finger_read(FINGER* f)
+int finger_read(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
   int mapped = map(val, f->low, f->high, 0, 180);
@@ -90,7 +90,7 @@ int finger_read(FINGER* f)
 }
 
 // write mapped values to the corresponding servo
-void finger_write(FINGER* f, int val)
+void finger_write(Finger* f, int val)
 {
   if (f->invert)
   {
@@ -102,8 +102,34 @@ void finger_write(FINGER* f, int val)
   }
 }
 
+void finger_write_average(Finger* f)
+{
+    if (f->history_index < AVG_THRESHOLD-1)
+    {
+        // just write
+    }
+    else
+    {
+      // do avg algorithm
+    }
+}
+
+void swap(int* array, int a, int b)
+{
+    int tmp = array[a];
+    array[a] = array[b];
+    array[b] = array[a];
+}
+
+int compute_average(int* array)
+{
+    // add everything
+    // divide by AVG_THRESHOLD
+    // shift (call swap function)
+}
+
 // automatically read sensor and write to the servo
-void finger_move(FINGER* f)
+void finger_move(Finger* f)
 {
   int val = finger_read(f);
   finger_write(f, val);
@@ -116,7 +142,7 @@ void setup() {
     pinMode(CALIBRATE_LED, OUTPUT);
 
     for (int i=0;i<NUM_FINGERS;i++){
-      finger_setup(&tmp_fingers[i], i, PWM_PINS[i]);
+      finger_setup(&fingers[i], i, PWM_PINS[i], 1);
     }
 
 }
@@ -140,13 +166,13 @@ void loop() {
 
     for (int i=0; i<NUM_FINGERS; i++)
     {
-      finger_calibrate(&tmp_fingers[i]);
+      finger_calibrate(&fingers[i]);
     }
   }
   else
   {
     for (int i=0;i<NUM_FINGERS;i++){
-      finger_move(&tmp_fingers[i]);
+      finger_move(&fingers[i]);
       delay(1);
     }
   }
