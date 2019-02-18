@@ -22,6 +22,8 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 
 int calibrate_mode = 0;
 
+int weights[10] = {1.0f * 0.9f * 0.8f * 0.7f * 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
+
 // wrapper for all the pins necessary to control the fingers
 typedef struct _Finger
 {
@@ -31,6 +33,7 @@ typedef struct _Finger
   int high;
   int last;
   bool invert;
+  int avg;
   int history[AVG_THRESHOLD];
   // init array to be FULL from the start
 } Finger;
@@ -74,6 +77,8 @@ void finger_calibrate(Finger* f)
   {
     f->high = val;
   }
+
+  // TODO fill finger value (history array) with first read mapped value
 }
 
 // read and map bend sensor values
@@ -104,6 +109,7 @@ void finger_write(Finger* f, int val)
 
 void finger_write_average(Finger* f)
 {
+    //avg = (history) dot product
     if (f->history_index < AVG_THRESHOLD-1)
     {
         // just write
@@ -121,7 +127,7 @@ void swap(int* array, int a, int b)
     array[b] = array[a];
 }
 
-int compute_average(int* array)
+int compute_average(Finger* )
 {
     // add everything
     // divide by AVG_THRESHOLD
