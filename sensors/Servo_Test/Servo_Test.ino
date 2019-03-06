@@ -3,7 +3,7 @@
 
 #define BUF_SIZE NUM_FINGERS
 #define AVG_THRESHOLD 10
-#define NUM_FINGERS 3
+#define NUM_FINGERS 5
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 // easy names for array indices of the fingers
@@ -107,7 +107,7 @@ void finger_write(Finger* f, int val)
   }
 }
 
-void finger_write_average(Finger* f)
+/*void finger_write_average(Finger* f)
 {
     //avg = (history) dot product
     if (f->history_index < AVG_THRESHOLD-1)
@@ -118,7 +118,7 @@ void finger_write_average(Finger* f)
     {
       // do avg algorithm
     }
-}
+}*/
 
 void swap(int* array, int a, int b)
 {
@@ -148,9 +148,15 @@ void setup() {
     pinMode(CALIBRATE_LED, OUTPUT);
 
     for (int i=0;i<NUM_FINGERS;i++){
-      finger_setup(&fingers[i], i, PWM_PINS[i], 1);
+      if (i == INDEX)
+      {
+        finger_setup(&fingers[i], i, PWM_PINS[i], 0);
+      }
+      else
+      {
+        finger_setup(&fingers[i], i, PWM_PINS[i], 1);
+      }
     }
-
 }
 
 // Arduino loop function
