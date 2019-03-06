@@ -2,7 +2,7 @@
 #include <QueueArray.h>
 
 #define BUF_SIZE NUM_FINGERS
-#define AVG_THRESHOLD 10
+#define AVG_THRESHOLD 10 // the number of data points being considered (weighted avg.)
 #define NUM_FINGERS 3
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
@@ -22,7 +22,7 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 
 int calibrate_mode = 0;
 
-int weights[10] = {1.0f * 0.9f * 0.8f * 0.7f * 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
+int weights[10] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
 
 // wrapper for all the pins necessary to control the fingers
 typedef struct _Finger
@@ -86,7 +86,7 @@ int finger_read(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
   int mapped = map(val, f->low, f->high, 0, 180);
-
+  finger_write_average(f, mapped);
   if (abs(mapped - f->last) > NOISE_TOLERANCE)
   {
     return mapped;
@@ -107,17 +107,13 @@ void finger_write(Finger* f, int val)
   }
 }
 
-void finger_write_average(Finger* f)
+void finger_write_average(Finger* f, int val)
 {
+    //I don't think we need this if/else anymore? (history arr will be initialized with vals soo it starts off full)
     //avg = (history) dot product
-    if (f->history_index < AVG_THRESHOLD-1)
-    {
-        // just write
-    }
-    else
-    {
-      // do avg algorithm
-    }
+    // do avg algorithm
+    int finger_average = compute_average(f, val);
+    // write to servo?
 }
 
 void swap(int* array, int a, int b)
@@ -127,11 +123,26 @@ void swap(int* array, int a, int b)
     array[b] = array[a];
 }
 
-int compute_average(Finger* )
+int compute_average(Finger* f, int val)
 {
-    // add everything
-    // divide by AVG_THRESHOLD
     // shift (call swap function)
+    for (int i = 0; i < AVG_THRESHOLD - 1; i++) {
+      swap(f->history, i, i + 1);
+    }
+    // insert new value at end of arr
+    f->history[AVG_THRESHOLD-1] = val;
+    // compute dot product with weights?
+    float weighted_sum = dot_product(f->history, weights, AVG_THRESHOLD);
+    // divide by AVG_THRESHOLD
+    return (int) (weighted_sum/AVG_THRESHOLD);
+}
+
+float dot_product(int* arr1, int* arr2, int length) {
+  float sum = 0;
+  for (int i = 0; i < length; i ++) {
+    sum += arr1[0] * arr2[i];
+  }
+  return sum;
 }
 
 // automatically read sensor and write to the servo
