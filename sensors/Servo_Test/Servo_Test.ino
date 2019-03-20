@@ -22,7 +22,7 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 
 int calibrate_mode = 0;
 
-int weights[10] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
+int weights[AVG_THRESHOLD] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
 
 // wrapper for all the pins necessary to control the fingers
 typedef struct _Finger
@@ -78,7 +78,10 @@ void finger_calibrate(Finger* f)
     f->high = val;
   }
 
-  // TODO fill finger value (history array) with first read mapped value
+  // fill finger value (history array) with first read mapped value
+  int avg = (f->low + f->high)/2;
+  for (int i = 0; i < AVG_THRESHOLD; i ++)
+    f->history[i] = avg;
 }
 
 // read and map bend sensor values
@@ -109,18 +112,15 @@ void finger_write(Finger* f, int val)
 
 void finger_write_average(Finger* f, int val)
 {
-    //I don't think we need this if/else anymore? (history arr will be initialized with vals soo it starts off full)
-    //avg = (history) dot product
-    // do avg algorithm
     int finger_average = compute_average(f, val);
-    // write to servo?
+    f->servo.write(finger_average);
 }
 
 void swap(int* array, int a, int b)
 {
     int tmp = array[a];
     array[a] = array[b];
-    array[b] = array[a];
+    array[b] = tmp;
 }
 
 int compute_average(Finger* f, int val)
@@ -140,7 +140,7 @@ int compute_average(Finger* f, int val)
 float dot_product(int* arr1, int* arr2, int length) {
   float sum = 0;
   for (int i = 0; i < length; i ++) {
-    sum += arr1[0] * arr2[i];
+    sum += arr1[i] * arr2[i];
   }
   return sum;
 }
