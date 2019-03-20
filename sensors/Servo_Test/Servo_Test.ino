@@ -6,6 +6,7 @@
 #define NUM_FINGERS 5
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
+static int DIR_TOGGLE[6] = {33,35,37,39,41};
 // easy names for array indices of the fingers
 #define INDEX 0
 #define MIDDLE 1
@@ -19,6 +20,9 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 // flag that indicates if we are calibrating the bend sensors
 #define CALIBRATE_BUTTON 12 // button to activate calibrate mode
 #define CALIBRATE_LED 13 // calibrate mode led indicator
+
+#define SERVO_MIN 30
+#define SERVO_MAX 150
 
 int calibrate_mode = 0;
 
@@ -42,7 +46,7 @@ Finger fingers[NUM_FINGERS]; // array of finger wrappers
 
 int readPot(int pin){
   int value = analogRead(pin);
-  return map(value, 0, 1024, 0, 180);
+  return map(value, 0, 1024, 50, 100);
 }
 
 // fill all the values in the finger wrapper
@@ -54,7 +58,7 @@ void finger_setup(Finger* f, int sensor, int servo, int invert)
   f->servo.attach(servo);
   if (f->invert)
   {
-      f->servo.write(180);
+      f->servo.write(100);
   }
   f->low = analogRead(sensor);
   f->high = analogRead(sensor);
@@ -85,7 +89,7 @@ void finger_calibrate(Finger* f)
 int finger_read(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
-  int mapped = map(val, f->low, f->high, 0, 180);
+  int mapped = map(val, f->low, f->high, SERVO_MIN, SERVO_MAX);
 
   if (abs(mapped - f->last) > NOISE_TOLERANCE)
   {
@@ -99,7 +103,7 @@ void finger_write(Finger* f, int val)
 {
   if (f->invert)
   {
-      f->servo.write(180-val);
+      f->servo.write(SERVO_MAX-val);
   }
   else
   {
@@ -147,6 +151,11 @@ void setup() {
     pinMode(CALIBRATE_BUTTON, INPUT_PULLUP);
     pinMode(CALIBRATE_LED, OUTPUT);
 
+    for (int i=0; i<NUM_FINGERS;i++)
+    {
+      pinMode(DIR_TOGGLE[i], INPUT_PULLUP);
+    }
+
     for (int i=0;i<NUM_FINGERS;i++){
       if (i == INDEX)
       {
@@ -183,7 +192,13 @@ void loop() {
   }
   else
   {
-    for (int i=0;i<NUM_FINGERS;i++){
+    for (int i=0; i<NUM_FINGERS;i++)
+    {
+      fingers[i].invert = !digitalRead(DIR_TOGGLE[i]);
+    }
+    
+    for (int i=0;i<NUM_FINGERS;i++)
+    {
       finger_move(&fingers[i]);
       delay(1);
     }
