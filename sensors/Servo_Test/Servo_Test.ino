@@ -6,7 +6,8 @@
 #define NUM_FINGERS 5
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
-static int DIR_TOGGLE[6] = {33,35,37,39,41};
+static int DIR_TOGGLE[6] = {31,33,35,37,39};
+static int TRIM_PINS[6] = {8,9,10,11,12};
 // easy names for array indices of the fingers
 #define INDEX 0
 #define MIDDLE 1
@@ -22,7 +23,7 @@ static int DIR_TOGGLE[6] = {33,35,37,39,41};
 #define CALIBRATE_LED 13 // calibrate mode led indicator
 
 #define SERVO_MIN 30
-#define SERVO_MAX 150
+#define SERVO_MAX 180
 
 int calibrate_mode = 0;
 
@@ -203,4 +204,12 @@ void loop() {
       delay(1);
     }
   }
+
+  /*for (int i=0; i<NUM_FINGERS; i++)
+  {
+    Serial.print("finger: ");
+    Serial.print(i+1);
+    Serial.print(" value: ");*/
+    Serial.println(finger_read(&fingers[1]));
+  //}
 }
