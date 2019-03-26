@@ -3,7 +3,7 @@
 
 #define BUF_SIZE NUM_FINGERS
 #define AVG_THRESHOLD 10 // the number of data points being considered (weighted avg.)
-#define NUM_FINGERS 3
+#define NUM_FINGERS 5
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 // easy names for array indices of the fingers
@@ -89,12 +89,15 @@ int finger_read(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
   int mapped = map(val, f->low, f->high, 0, 180);
-  finger_write_average(f, mapped);
-  if (abs(mapped - f->last) > NOISE_TOLERANCE)
+  Serial.print(mapped);
+  Serial.print("\t");
+  return finger_write_average(f, mapped);
+  /*if (abs(mapped - f->last) > NOISE_TOLERANCE)
   {
     return mapped;
   }
   return f->last;
+  */
 }
 
 // write mapped values to the corresponding servo
@@ -110,10 +113,13 @@ void finger_write(Finger* f, int val)
   }
 }
 
-void finger_write_average(Finger* f, int val)
+int finger_write_average(Finger* f, int val)
 {
     int finger_average = compute_average(f, val);
     f->servo.write(finger_average);
+    Serial.print(finger_average);
+    Serial.print("\n");
+    return finger_average;
 }
 
 void swap(int* array, int a, int b)
