@@ -2,7 +2,7 @@
 #include <QueueArray.h>
 
 #define BUF_SIZE NUM_FINGERS
-#define AVG_THRESHOLD 10 // the number of data points being considered (weighted avg.)
+#define AVG_THRESHOLD 100 // the number of data points being considered (weighted avg.)
 #define NUM_FINGERS 5
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
@@ -23,7 +23,13 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 int calibrate_mode = 0;
 
 //int weights[AVG_THRESHOLD] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
-float weights[AVG_THRESHOLD] = {1.0f , 1.0f , 1.0f , 1.0f , 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+// better weights? int weights[AVG_THRESHOLD] = {.3f, .2f, .14f, .09f, .07f, .06f, .05f, .04f, .03, .02}
+// ^these weights sum to 1 (yay!) - otherwise we are accidentally scaling the whole thing up/down :(
+// kind of random but we can adjust based on which vals tend to --> smoothest results
+// also if you change from weights below make sure to remove division by AVG_THRESHOLD
+// ^ (last line in func. compute_average()
+//float weights[AVG_THRESHOLD] = {1.0f , 1.0f , 1.0f , 1.0f , 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+
 
 
 // wrapper for all the pins necessary to control the fingers
@@ -37,7 +43,7 @@ typedef struct _Finger
   bool invert;
   int avg;
   int history[AVG_THRESHOLD];
-  // init array to be FULL from the start
+  int oldest;
 } Finger;
 
 Finger fingers[NUM_FINGERS]; // array of finger wrappers
@@ -60,6 +66,7 @@ void finger_setup(Finger* f, int sensor, int servo, int invert)
   }
   f->low = analogRead(sensor);
   f->high = analogRead(sensor);
+  f->oldest = AVG_THRESHOLD-1;
 
   Serial.print("PWM: ");
   Serial.println(servo);
@@ -91,8 +98,6 @@ int finger_read(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
   int mapped = map(val, f->low, f->high, 0, 180);
-  //Serial.print(mapped);
-  //Serial.print("\t");
   return finger_write_average(f, mapped);
   /*if (abs(mapped - f->last) > NOISE_TOLERANCE)
   {
@@ -115,10 +120,13 @@ void finger_write(Finger* f, int val)
   }
 }
 
+
+// not really sure why this is whole func...
+// can we just call computer_average from finger_read?
 int finger_write_average(Finger* f, int val)
 {
     int finger_average = compute_average(f, val);
-    f->servo.write(finger_average);
+    //f->servo.write(finger_average);
     Serial.print(finger_average);
     Serial.print("\n");
     return finger_average;
@@ -133,16 +141,24 @@ void swap(int* array, int a, int b)
 
 int compute_average(Finger* f, int val)
 {
-    // shift (call swap function)
-    for (int i = 0; i < AVG_THRESHOLD - 1; i++) {
-      swap(f->history, i, i + 1);
-    }
-    // insert new value at end of arr
-    f->history[AVG_THRESHOLD-1] = val;
-    // compute dot product with weights?
-    float weighted_sum = dot_product(f->history, weights, AVG_THRESHOLD);
-    // divide by AVG_THRESHOLD
+    f->history[f->oldest] = val;
+    f->oldest = next_oldest(f->oldest);
+    float weighted_sum = sum(f->history, AVG_THRESHOLD);
     return (int) (weighted_sum/(float)AVG_THRESHOLD);
+}
+
+int next_oldest(int oldest) {
+  oldest ++;
+  if (oldest == AVG_THRESHOLD) oldest = 0;
+  return oldest;
+}
+
+float sum(int* array, int length) {
+  float sum = 0;
+  for (int i = 0; i < length; i ++) {
+    sum += (float) array[i];
+  }
+  return sum;
 }
 
 float dot_product(int* arr1, float* arr2, int length) {
@@ -157,7 +173,7 @@ float dot_product(int* arr1, float* arr2, int length) {
 void finger_move(Finger* f)
 {
   int val = finger_read(f);
-  //finger_write(f, val);
+  finger_write(f, val);
 }
 
 // Arduino setup function
@@ -197,7 +213,7 @@ void loop() {
   else
   {
     for (int i=INDEX;i<=INDEX;i++){
-      
+
       finger_move(&fingers[i]);
       delay(1);
     }
