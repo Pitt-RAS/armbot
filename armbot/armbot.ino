@@ -1,3 +1,5 @@
+#include "armbot.h"
+
 void setup()
 {
     armbot_setup();
