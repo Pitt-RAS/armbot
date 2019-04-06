@@ -125,6 +125,12 @@ int finger_write_average(Finger* f, int val)
     return finger_average;
 }
 
+int next_oldest(int oldest) {
+  oldest ++;
+  if (oldest == AVG_THRESHOLD) oldest = 0;
+  return oldest;
+}
+
 int compute_average(Finger* f, int val)
 {
     f->avg = f->avg + ((float)(val - f->history[f->oldest]))/(float)AVG_THRESHOLD;
