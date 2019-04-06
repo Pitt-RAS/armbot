@@ -41,8 +41,8 @@ typedef struct _Finger
   int high;
   int last;
   bool invert;
-  int avg;
   int history[AVG_THRESHOLD];
+  float avg;
   int oldest;
 } Finger;
 
@@ -87,10 +87,9 @@ void finger_calibrate(Finger* f)
     f->high = val;
   }
 
-  // fill finger value (history array) with first read mapped value
   int avg = (f->low + f->high)/2;
-  for (int i = 0; i < AVG_THRESHOLD; i ++)
-    f->history[i] = avg;
+  f->avg = (float) avg;
+  history[f->oldest] = avg;
 }
 
 // read and map bend sensor values
@@ -99,12 +98,6 @@ int finger_read(Finger* f)
   int val = analogRead(f->sensor_pin);
   int mapped = map(val, f->low, f->high, 0, 180);
   return finger_write_average(f, mapped);
-  /*if (abs(mapped - f->last) > NOISE_TOLERANCE)
-  {
-    return mapped;
-  }
-  return f->last;
-  */
 }
 
 // write mapped values to the corresponding servo
@@ -132,41 +125,12 @@ int finger_write_average(Finger* f, int val)
     return finger_average;
 }
 
-void swap(int* array, int a, int b)
-{
-    int tmp = array[a];
-    array[a] = array[b];
-    array[b] = tmp;
-}
-
 int compute_average(Finger* f, int val)
 {
+    f->avg = f->avg + ((float)(val - f->history[f->oldest]))/(float)AVG_THRESHOLD;
     f->history[f->oldest] = val;
     f->oldest = next_oldest(f->oldest);
-    float weighted_sum = sum(f->history, AVG_THRESHOLD);
-    return (int) (weighted_sum/(float)AVG_THRESHOLD);
-}
-
-int next_oldest(int oldest) {
-  oldest ++;
-  if (oldest == AVG_THRESHOLD) oldest = 0;
-  return oldest;
-}
-
-float sum(int* array, int length) {
-  float sum = 0;
-  for (int i = 0; i < length; i ++) {
-    sum += (float) array[i];
-  }
-  return sum;
-}
-
-float dot_product(int* arr1, float* arr2, int length) {
-  float sum = 0;
-  for (int i = 0; i < length; i ++) {
-    sum += (float) arr1[i] * (float) arr2[i];
-  }
-  return sum;
+    return f->avg;
 }
 
 // automatically read sensor and write to the servo
