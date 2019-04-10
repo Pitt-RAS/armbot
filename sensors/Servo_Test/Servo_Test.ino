@@ -1,9 +1,9 @@
 #include <Servo.h>
-#include <QueueArray.h>
 
 #define BUF_SIZE NUM_FINGERS
 #define AVG_THRESHOLD 10 // the number of data points being considered (weighted avg.)
 #define NUM_FINGERS 5
+
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 // easy names for array indices of the fingers
@@ -23,8 +23,7 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 int calibrate_mode = 0;
 
 //int weights[AVG_THRESHOLD] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
-float weights[AVG_THRESHOLD] = {1.0f , 1.0f , 1.0f , 1.0f , 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-
+float weights[AVG_THRESHOLD] = {1.0f , 1.0f , 1.0f , 1.0f , 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}
 
 // wrapper for all the pins necessary to control the fingers
 typedef struct _Finger
