@@ -2,7 +2,8 @@
 
 #define BUF_SIZE NUM_FINGERS
 #define AVG_THRESHOLD 10 // the number of data points being considered (weighted avg.)
-#define NUM_FINGERS 3
+#define NUM_FINGERS 5
+
 #define NOISE_TOLERANCE 20
 static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 // easy names for array indices of the fingers
@@ -21,7 +22,8 @@ static int PWM_PINS[6] = {3,5,6,9,10,11}; // pwm pins avaliable for use
 
 int calibrate_mode = 0;
 
-int weights[AVG_THRESHOLD] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
+//int weights[AVG_THRESHOLD] = {1.0f , 0.9f , 0.8f , 0.7f , 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1};
+float weights[AVG_THRESHOLD] = {1.0f , 1.0f , 1.0f , 1.0f , 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}
 
 // wrapper for all the pins necessary to control the fingers
 typedef struct _Finger
@@ -88,12 +90,15 @@ int finger_read(Finger* f)
 {
   int val = analogRead(f->sensor_pin);
   int mapped = map(val, f->low, f->high, 0, 180);
-  finger_write_average(f, mapped);
-  if (abs(mapped - f->last) > NOISE_TOLERANCE)
+  //Serial.print(mapped);
+  //Serial.print("\t");
+  return finger_write_average(f, mapped);
+  /*if (abs(mapped - f->last) > NOISE_TOLERANCE)
   {
     return mapped;
   }
   return f->last;
+  */
 }
 
 // write mapped values to the corresponding servo
@@ -109,10 +114,13 @@ void finger_write(Finger* f, int val)
   }
 }
 
-void finger_write_average(Finger* f, int val)
+int finger_write_average(Finger* f, int val)
 {
     int finger_average = compute_average(f, val);
     f->servo.write(finger_average);
+    Serial.print(finger_average);
+    Serial.print("\n");
+    return finger_average;
 }
 
 void swap(int* array, int a, int b)
@@ -133,13 +141,13 @@ int compute_average(Finger* f, int val)
     // compute dot product with weights?
     float weighted_sum = dot_product(f->history, weights, AVG_THRESHOLD);
     // divide by AVG_THRESHOLD
-    return (int) (weighted_sum/AVG_THRESHOLD);
+    return (int) (weighted_sum/(float)AVG_THRESHOLD);
 }
 
-float dot_product(int* arr1, int* arr2, int length) {
+float dot_product(int* arr1, float* arr2, int length) {
   float sum = 0;
   for (int i = 0; i < length; i ++) {
-    sum += arr1[i] * arr2[i];
+    sum += (float) arr1[i] * (float) arr2[i];
   }
   return sum;
 }
@@ -148,7 +156,7 @@ float dot_product(int* arr1, int* arr2, int length) {
 void finger_move(Finger* f)
 {
   int val = finger_read(f);
-  finger_write(f, val);
+  //finger_write(f, val);
 }
 
 // Arduino setup function
@@ -187,7 +195,8 @@ void loop() {
   }
   else
   {
-    for (int i=0;i<NUM_FINGERS;i++){
+    for (int i=INDEX;i<=INDEX;i++){
+      
       finger_move(&fingers[i]);
       delay(1);
     }
