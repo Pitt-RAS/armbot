@@ -6,8 +6,8 @@
 class Finger
 {
 public:
-    Finger(uint8_t, uint8_t);
-    ~Finger();
+    Finger(uint8_t a=0, uint8_t b=0) : servoPin(a), sensorPin(b), inverted(0) {}
+    ~Finger() {}
 
     void attach(uint8_t, uint8_t);
     void invert();
