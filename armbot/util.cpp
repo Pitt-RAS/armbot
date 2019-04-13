@@ -1,6 +1,6 @@
 #include "util.h"
 
-float normalize(float val, float max)
+float normalize(float val)
 {
 	return val / 1023.0f;
 }

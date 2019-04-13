@@ -17,7 +17,8 @@ public:
 		x(0),
 		last_dx(0),
 		dx(0),
-		dx2(0)
+		dx2(0),
+		angle(0)
 	{}
 
 	~Elbow() {}
@@ -35,13 +36,14 @@ private:
 	uint8_t rev_pin;
 	uint8_t sensor_pin;
 	uint16_t speed;
-	uint8_t dir;
+	int dir;
 	uint32_t then;
 	float last_x;
 	float x;
 	float last_dx;
 	float dx;
 	float dx2;
+	uint16_t angle;
 };
 
 #endif /* ELBOW_H */

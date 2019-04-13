@@ -4,6 +4,8 @@
 #include "wrist.h"
 #include "elbow.h"
 
+#define ECLIPSE
+
 #define N_FINGERS 5
 
 Elbow elbow;
@@ -21,5 +23,18 @@ void armbot_loop()
 {
 	elbow.poll();
 	elbow.drive();
-    Serial.println("hello world");
 }
+
+#ifdef ECLIPSE
+
+void setup()
+{
+	armbot_setup();
+}
+
+void loop()
+{
+	armbot_loop();
+}
+
+#endif /* ECLIPSE */
