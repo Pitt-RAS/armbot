@@ -9,7 +9,12 @@ public:
     Wrist();
     ~Wrist();
 
+    void attach(int, int);
+    void poll();
 
+private:
+    int clk;
+    int data;
 };
 
 #endif /* WRIST_H */
