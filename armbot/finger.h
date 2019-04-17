@@ -13,15 +13,19 @@ public:
     ~Finger() {}
 
     void attach(uint8_t, uint8_t);
-    void invert();
     void setPulse(uint8_t, double);
+    int read_sensor();
     void drive();
+    void calibrate();
 
 private:
     uint8_t servoPin;
     uint8_t sensorPin;
     uint8_t inverted;
     uint8_t servonum;
+    bool invert;
+    int sensorLow;
+    int sensorHigh;
     Adafruit_PWMServoDriver drv = Adafruit_PWMServoDriver();
 };
 
