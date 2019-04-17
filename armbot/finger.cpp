@@ -4,43 +4,32 @@
 
 
 // position
-#define SERVOMIN 200
-#define SERVOMAX 600
-#define NUMSERVOS 5
 static int SENSOR_PINS[5] = {2, 3, 4, 5, 6};
 static bool INVERT[5] = {false, false, false, false, false};
 static bool SETUP[5] = {false, false, false, false, false};
 static int SENSOR_LOWS[5];
 static int SENSOR_HIGHS[5];
 
-void Finger::attach(uint8_t a, uint8_t b)
+void Finger::attach(uint8_t sensor, uint8_t servo)
 {
-    sensorPin = a;
-    pinMode(sensorPin, INPUT);
-    servoPin = b;
-    drv.begin();
-    drv.setPWMFreq(60); // Analog servos run at ~60 Hz updates
-    drv = Adafruit_PWMServoDriver(&Wire, 0x40);
-    servonum = 0; // which port they are assoc w/0-6
-    invert = INVERT[servonum];
-    int val = analogRead(sensorPin);
-    for (int i = 0; i < NUMSERVOS; i++) {
-      SENSOR_LOWS[i] = val;
-      SENSOR_HIGHS[i] = val;
-    }
+    sensor_pin = sensor;
+    servo_num = servo;
+    pinMode(sensor_pin, INPUT);
+    sensor_min = analogRead(sensor_pin);
+    sensor_max = analogRead(sensor_pin);
 }
 
 void Finger::calibrate()
 {
-  int val = analogRead(sensorPin);
-  if (val < sensorLow)
-  {
-    sensorLow = val;
-    SENSOR_LOWS[servonum] = val;
-  }
-  if (val > sensorHigh)
-  {
-    sensorHigh = val;
+    int val = analogRead(sensorPin);
+    if (val < sensorLow)
+    {
+        sensorLow = val;
+        SENSOR_LOWS[servonum] = val;
+    }
+    if (val > sensorHigh)
+    {
+        sensorHigh = val;
     SENSOR_HIGHS[servonum] = val;
   }
 }
@@ -53,6 +42,18 @@ int Finger::read_sensor()
 
 void Finger::drive()
 {
+    if (calibrate)
+    {
+
+    }
+    else
+    {
+        
+    }
+    
+    int angle = map(analogRead(sensor_pin), sensor_min, sensor_max, 0, 180);
+
+
     // To-do: invert finger if invert == true and servo not already inverted
     if (!SETUP[servonum]) {
         // To-do: invert finger if invert == true

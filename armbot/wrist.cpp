@@ -1,5 +1,6 @@
 #include "wrist.h"
 #include "util.h"
+#include "servomgr.h"
 #include <Wire.h>
 
 Wrist::Wrist()
@@ -12,11 +13,8 @@ Wrist::~Wrist()
     
 }
 
-void Wrist::attach(int c, int d)
-{
-    clk = c;
-    data = d;
-    
+void Wrist::attach()
+{    
     I2C_setByte(0x06,29,0x68);
     I2C_setByte(0x06,26,0x68);
     I2C_setByte(0x10,27,0x68);
@@ -25,7 +23,7 @@ void Wrist::attach(int c, int d)
     I2C_setByte(0x16,0x0A,0x0C);
 }
 
-void Wrist::poll()
+void Wrist::drive()
 {
     Serial.print("poll: ");
     uint8_t buf[20];
@@ -41,8 +39,8 @@ void Wrist::poll()
 
     //Serial.print("ax: ");
     //Serial.print(ax);
-    Serial.print("\tay: ");
-    Serial.print(ay);
+    //Serial.print("\tay: ");
+    //Serial.print(ay);
     //Serial.print("\taz: ");
     //Serial.print(az);
     //Serial.print("\t\tgx: ");
@@ -52,7 +50,12 @@ void Wrist::poll()
     //Serial.print("\t\tgz: ");
     //Serial.print(gz);
 
-    Serial.println();
+    pitch = map(gx, GYRO_MIN, GYRO_MAX, 0, 180);
+    roll = map(gy, GYRO_MIN, GYRO_MAX, 0, 180);
+
+    //Serial.println();
 
     delay(10);    
+    ServoMgr::write(PITCH_SERVO, pitch);
+    ServoMgr::write(YAW_SERVO, yaw);
 }
