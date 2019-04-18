@@ -23,6 +23,16 @@ void Wrist::attach()
     I2C_setByte(0x16,0x0A,0x0C);
 }
 
+void Wrist::test()
+{
+    Serial.println("hi");
+    ServoMgr::write(1, 0);
+    delay(2000);
+    ServoMgr::write(1, 180);
+    Serial.println("lo");
+    delay(2000);
+}
+
 void Wrist::drive()
 {
     Serial.print("poll: ");
@@ -57,5 +67,5 @@ void Wrist::drive()
 
     delay(10);    
     ServoMgr::write(PITCH_SERVO, pitch);
-    ServoMgr::write(YAW_SERVO, yaw);
+    ServoMgr::write(YAW_SERVO, roll);
 }

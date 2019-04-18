@@ -13,7 +13,9 @@ public:
     ~Wrist();
 
     void attach();
+    void test();
     void poll();
+    void drive();
 
 private:
     int clk;

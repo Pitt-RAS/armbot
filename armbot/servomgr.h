@@ -2,8 +2,8 @@
 #define SERVOMGR_H
 
 #define DRIVER_ADDR 0X40
-#define SERVO_MIN 200
-#define SERVO_MAX 600
+#define SERVO_MIN 250
+#define SERVO_MAX 540
 
 #include <Adafruit_PWMServoDriver.h>
 
@@ -15,7 +15,7 @@ public:
     static void write(int, int);
 
 private:
-    static Adafruit_PWMservoDriver drv;
+    static Adafruit_PWMServoDriver drv;
 };
 
 #endif /* SERVOMGR_H */

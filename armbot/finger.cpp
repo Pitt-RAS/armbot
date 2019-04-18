@@ -1,5 +1,6 @@
 #include "finger.h"
 #include "util.h"
+#include "servomgr.h"
 #include <Arduino.h>
 
 
@@ -21,46 +22,43 @@ void Finger::attach(uint8_t sensor, uint8_t servo)
 
 void Finger::calibrate()
 {
-    int val = analogRead(sensorPin);
-    if (val < sensorLow)
+    int val = analogRead(sensor_pin);
+    Serial.print(servo_num);
+    Serial.print(" ");
+    Serial.println(val);
+    if (val < sensor_min)
     {
-        sensorLow = val;
-        SENSOR_LOWS[servonum] = val;
+        sensor_min = val;
+        //SENSOR_LOWS[servonum] = val;
     }
-    if (val > sensorHigh)
+    if (val > sensor_max)
     {
-        sensorHigh = val;
-    SENSOR_HIGHS[servonum] = val;
-  }
-}
-
-int Finger::read_sensor()
-{
-  int val = analogRead(sensorPin);
-  return map(val, sensorLow, sensorHigh, SERVOMIN, SERVOMAX);
+        sensor_max = val;
+    //SENSOR_HIGHS[servonum] = val;
+    }
 }
 
 void Finger::drive()
 {
-    if (calibrate)
-    {
-
-    }
-    else
-    {
-        
-    }
     
     int angle = map(analogRead(sensor_pin), sensor_min, sensor_max, 0, 180);
 
-
-    // To-do: invert finger if invert == true and servo not already inverted
-    if (!SETUP[servonum]) {
-        // To-do: invert finger if invert == true
-        calibrate();
-        SETUP[servonum] = true;
+    if (!inverted)
+    {
+      ServoMgr::write(servo_num, angle);
     }
-    Serial.println(servonum);
+    else
+    {
+      ServoMgr::write(servo_num, 180 - angle);
+    }
+  
+    // To-do: invert finger if invert == true and servo not already inverted
+    //if (!SETUP[servonum]) {
+        // To-do: invert finger if invert == true
+    //    calibrate();
+    //    SETUP[servonum] = true;
+    //}
+    //Serial.println(servonum);
     /*for (uint16_t pulselen = SERVOMIN; pulselen < SERVOMAX; pulselen++) {
        drv.setPWM(servonum, 0, pulselen);
     }
@@ -70,14 +68,19 @@ void Finger::drive()
         drv.setPWM(servonum, 0, pulselen);
     }
     */
-    int pulselen = read_sensor();
-    drv.setPWM(servonum, 0, pulselen);
-    delay(500);
+    //int pulselen = read_sensor();
+    //drv.setPWM(servonum, 0, pulselen);
+    //delay(500);
 
-    servonum ++;
-    if (servonum >= NUMSERVOS) servonum = 0;
-    sensorPin = SENSOR_PINS[servonum];
+    //servonum ++;
+    //if (servonum >= NUMSERVOS) servonum = 0;
+    //sensorPin = SENSOR_PINS[servonum];
     //invert = INVERT[servonum];
-    sensorLow = SENSOR_LOWS[servonum];
-    sensorHigh = SENSOR_HIGHS[servonum];
+    //sensorLow = SENSOR_LOWS[servonum];
+    //sensorHigh = SENSOR_HIGHS[servonum];
+}
+
+void Finger::invert()
+{
+  inverted = !inverted;
 }
